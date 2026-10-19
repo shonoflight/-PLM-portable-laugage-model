@@ -12,6 +12,10 @@
  *               the newest version wins, so two people (worker and
  *               participant) can both work on the same timesheet.
  *   Outside Delta Chat (plain browser) it just saves locally.
+ *   exportDefaults() / importDefaults()  v1.1: save the Defaults card
+ *               (worker number, names, codes, suggestion settings) to a
+ *               .json file in a chat, and load it into a fresh copy of
+ *               the app. (Each copy of an .xdc keeps its own storage.)
  *
  * TO CHANGE: SYNC_DELAY_MS = how long to wait after the last edit before
  *   sending; STORAGE_KEY = rename to start fresh.
@@ -27,15 +31,24 @@ const hasXdc = () => typeof window.webxdc !== "undefined" && typeof window.webxd
 
 let _dirty = { profile: false, periods: new Set() }, _timer = null;
 
+/* Fill in anything older saved data lacks (new defaults, v1.0 shifts). */
+function upgrade(s) {
+  const b = blankState();
+  s.profile = Object.assign({}, b.profile, s.profile || {});
+  if (!Array.isArray(s.profile.quick)) s.profile.quick = b.profile.quick;
+  if (!Array.isArray(s.codes) || !s.codes.length) s.codes = b.codes;
+  s.periods = s.periods || {};
+  Object.values(s.periods).forEach(pd => Object.values(pd.days || {}).forEach(list => list.forEach(migrateShift)));
+  if (s.syncOn === undefined) s.syncOn = true;
+  return s;
+}
+
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (s && s.profile && s.periods) {
-      state = Object.assign(blankState(), s);
-      if (!periodById(state.cur)) state.cur = defaultPeriodId();
-    }
+    if (s && s.profile && s.periods) state = upgrade(Object.assign(blankState(), s));
   } catch (e) { /* private mode or bad data: keep blank state */ }
-  if (state.syncOn === undefined) state.syncOn = true;
+  state.cur = defaultPeriodId();   // always open on the period due now
 }
 
 function writeLocal() {
@@ -65,18 +78,43 @@ function flush() {
 }
 window.addEventListener("pagehide", flush);
 
-/* onChange(): called after an update from someone else was merged. */
+/* onChange(): called once after a batch of updates from someone else
+   was merged (only when something actually changed). */
 function startSync(onChange) {
   if (!hasXdc()) return;
+  let pending = false;
   window.webxdc.setUpdateListener(u => {
-    if (!state.syncOn) return;
     const m = u.payload || {};
-    let changed = false;
-    if (m.kind === "profile" && (m.ts || 0) > (state.profileTs || 0)) {
-      state.profile = m.profile; state.codes = m.codes; state.profileTs = m.ts; changed = true;
-    } else if (m.kind === "period" && m.data && (m.data.ts || 0) > ((state.periods[m.id] || {}).ts || 0)) {
-      state.periods[m.id] = m.data; changed = true;
+    if (state.syncOn) {
+      if (m.kind === "profile" && m.profile && (m.ts || 0) > (state.profileTs || 0)) {
+        state.profile = m.profile; state.codes = m.codes; state.profileTs = m.ts;
+        upgrade(state); pending = true;
+      } else if (m.kind === "period" && m.data && periodById(m.id) && (m.data.ts || 0) > ((state.periods[m.id] || {}).ts || 0)) {
+        state.periods[m.id] = m.data;
+        upgrade(state); pending = true;
+      }
     }
-    if (changed) { writeLocal(); if (u.serial === u.max_serial) onChange(); }
+    if (pending && u.serial === u.max_serial) { pending = false; writeLocal(); onChange(); }
   }, 0);
+}
+
+/* ---- v1.1: defaults to / from a file ---- */
+const DEFAULTS_FILE = "iris-timesheet-defaults.json";
+async function exportDefaults() {
+  if (!(hasXdc() && typeof window.webxdc.sendToChat === "function")) throw new Error("needs Delta Chat");
+  const json = JSON.stringify({ app: "iris-timesheet", v: 1, profile: state.profile, codes: state.codes }, null, 1);
+  await window.webxdc.sendToChat({ file: { name: DEFAULTS_FILE, plainText: json }, text: "IRIS Timesheet defaults" });
+}
+/* -> true when defaults were loaded */
+async function importDefaults() {
+  if (!(hasXdc() && typeof window.webxdc.importFiles === "function")) throw new Error("needs a newer Delta Chat");
+  const files = await window.webxdc.importFiles({ extensions: [".json"], multiple: false });
+  if (!files || !files.length) return false;
+  const d = JSON.parse(await files[0].text());
+  if (!d || d.app !== "iris-timesheet" || !d.profile) throw new Error("not an IRIS Timesheet defaults file");
+  state.profile = d.profile;
+  if (Array.isArray(d.codes) && d.codes.length) state.codes = d.codes;
+  upgrade(state);
+  save("profile");
+  return true;
 }

@@ -11,6 +11,8 @@
  *   4. Day cards + shifts
  *   5. Totals table, problems list
  *   6. Signatures + signature pop-up
+ *   7. v1.1: time box + AM/PM buttons, shift warnings, Defaults card,
+ *      pop-ups (.ask) and notices (.toast)
  * DEPENDENCIES   none. Loaded by index.html.
  * ===================================================================== */
 
@@ -140,3 +142,45 @@ section.card.day.today { border-color: var(--accent); box-shadow: inset 4px 0 0 
 .sigact { display: flex; gap: 8px; }
 .sigact button { flex: 1; min-height: 44px; border: 1px solid var(--ink); background: transparent; }
 .sigact button.primary { background: var(--ink); color: var(--paper); font-weight: 700; }
+
+/* 7. v1.1 ------------------------------------------------------------- */
+/* time box + AM/PM, like the paper form; red when AM/PM is missing */
+.tc { display: flex; gap: 6px; align-items: flex-end; }
+.tc > input { flex: 1; min-width: 3.5rem; }
+.ap { display: flex; flex: none; }
+.ap button { min-width: 44px; min-height: 40px; border: 1px solid var(--line); background: #fff; font-size: 0.9rem; }
+.ap button + button { border-left: none; }
+.ap button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 700; }
+.tc.need .ap button:not(.on) { border-color: var(--err); color: var(--err); background: #fbeaea; animation: nudge 1.2s ease-in-out 2; }
+.tc.need > input, .tc.bad > input { border-bottom: 2px solid var(--err); }
+@keyframes nudge { 0%, 100% { transform: none; } 50% { transform: scale(1.08); } }
+.msgs { margin: 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.msgs li.error { color: var(--err); font-weight: 700; }
+.msgs li.warn { color: var(--warn); }
+.msgs:empty { display: none; }
+.carried { margin: 6px 0 0; font-size: 0.9rem; color: var(--accent); font-style: italic; }
+.note .act { margin-left: 8px; }
+
+/* Defaults card */
+label.pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 22px; background: #fff; align-self: flex-start; }
+label.pill:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+label.pill input { accent-color: var(--accent); width: 1.15rem; height: 1.15rem; margin: 0; }
+.codes { display: grid; gap: 4px; }
+.coderow { display: grid; grid-template-columns: 3.5rem 1fr auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.del.inline { position: static; }
+.with-act > input[placeholder="Code"] { flex: 0 0 5rem; }
+
+/* pop-ups + notices */
+.ask { position: fixed; inset: 0; z-index: 40; background: rgba(28, 24, 20, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ask-box { background: var(--card); border: 1px solid var(--ink); max-width: 400px; width: 100%; padding: 16px; max-height: 85vh; overflow: auto; }
+.ask-box p { margin: 0 0 14px; font-size: 1rem; line-height: 1.4; }
+.ask-btns { display: flex; gap: 8px; }
+.ask-btns button { flex: 1; padding: 12px; border: 1px solid var(--ink); background: #fff; min-height: 44px; }
+.ask-btns button.primary { background: var(--ink); color: #fff; font-weight: 700; }
+.toast {
+  position: fixed; left: 12px; right: 12px; bottom: 80px; z-index: 30; margin: 0 auto; max-width: 520px;
+  padding: 12px 14px; background: var(--ok); color: #fff; border-radius: 6px; font-size: 0.95rem;
+  opacity: 0; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+}
+.toast.warn { background: var(--err); font-weight: 700; }
+.toast.show { opacity: 1; transform: none; }

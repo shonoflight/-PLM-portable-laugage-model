@@ -11,6 +11,8 @@
  *                     puts it in a chat draft (Delta Chat) or downloads
  *                     it (plain browser). Errors block it; warnings ask.
  *   • setStatus(text) writes the small green line under the top bar.
+ *   v1.1: own pop-ups (js/ui.js) instead of window.confirm; an update
+ *   from the chat waits until you leave the box you're typing in.
  *
  * DEPENDENCIES   everything in js/ (see index.html load order)
  * RELATIONSHIP   index.html loads it last.
@@ -34,11 +36,12 @@ async function makePdf() {
   const list = problems(), errs = list.filter(x => x.level === "error");
   if (errs.length) {
     setStatus("Fix first: " + errs.map(x => x.text).join(" "));
+    showToast(errs[0].text + (errs.length > 1 ? " (+" + (errs.length - 1) + " more in Totals)" : ""), "warn", 6000);
     document.getElementById("totals").scrollIntoView({ behavior: "smooth" });
     return;
   }
   const warns = list.filter(x => x.level === "warn");
-  if (warns.length && !confirm("Make the PDF anyway?\n\n• " + warns.map(x => x.text).join("\n• "))) return;
+  if (warns.length && !(await askConfirm("Make the PDF anyway?\n\n• " + warns.map(x => x.text).join("\n• "), "Make PDF", "Go back"))) return;
   try {
     setStatus("Filling in the iLIFE form…");
     const bytes = await buildTimesheetPdf(state.cur);
@@ -60,8 +63,8 @@ async function makePdf() {
 }
 
 document.getElementById("pdf").onclick = makePdf;
-document.getElementById("clear").onclick = () => {
-  if (!confirm("Clear all shifts and signatures for " + periodById(state.cur).label + "?")) return;
+document.getElementById("clear").onclick = async () => {
+  if (!(await askConfirm("Clear all shifts and signatures for " + periodById(state.cur).label + "?", "Clear", "Keep"))) return;
   state.periods[state.cur] = { days: {}, sigW: "", sigP: "", ts: 0 };
   save(state.cur); renderFill(); setStatus("Pay period cleared.");
 };
@@ -72,4 +75,17 @@ document.getElementById("syncBtn").onclick = () => {
 
 load();
 renderFill();
-startSync(() => { renderFill(); setStatus("Updated from the chat."); });
+/* Redraw after a chat update — but not under someone's fingers. */
+let _redrawWaiting = false;
+function redrawFromChat() {
+  const a = document.activeElement;
+  if (a && a.tagName === "INPUT" && document.getElementById("fillView").contains(a)) {
+    if (!_redrawWaiting) {
+      _redrawWaiting = true;
+      a.addEventListener("blur", () => setTimeout(() => { _redrawWaiting = false; redrawFromChat(); }, 0), { once: true });
+    }
+    return;
+  }
+  renderFill(); setStatus("Updated from the chat.");
+}
+startSync(redrawFromChat);
