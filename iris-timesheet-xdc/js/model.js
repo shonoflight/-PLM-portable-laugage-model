@@ -22,6 +22,9 @@
  *                       time and pick AM/PM by themselves. 1-12 NEED AM/PM.
  *        setShiftTime(sh, "s"|"e")  re-computes sh.s / sh.e (snapped to
  *                       15 minutes) from what was typed.
+ *        AM/PM RULE (v1.2): the app never picks AM/PM for you. Only you
+ *        do: by tapping AM/PM, typing "pm", or typing a 24-hour time.
+ *        Rounding never crosses noon/midnight (it rounds down instead).
  *   3. Math:  shiftHours (overnight-aware), to12 for the form.
  *   4. Form lines: formLines(periodId). A shift past midnight is split at
  *        12:00 AM. The after-midnight part of a shift on the LAST night of
@@ -109,7 +112,8 @@ function setShiftTime(sh, k, quiet) {
   const r = parseTime(sh[k + "In"], sh[k + "Ap"]);
   let note = "";
   if (r.hhmm) {
-    const snapped = snap15(r.hhmm);
+    let snapped = snap15(r.hhmm);
+    if (to12(snapped).ap !== r.ap) snapped = fromMin(Math.floor(toMin(r.hhmm) / 15) * 15);   // keep your AM/PM
     if (snapped !== r.hhmm) note = "snapped";
     else if (r.was24) note = "24h";
     sh[k] = snapped;

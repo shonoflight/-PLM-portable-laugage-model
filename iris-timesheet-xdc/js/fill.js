@@ -11,7 +11,8 @@
  *       your Defaults (last shift / default times / blank). A 2nd shift
  *       on the same day starts where the 1st one ended.
  *       Each time = typed text (8, 830, 8:30, 16:30) + AM / PM buttons,
- *       like the paper form. A missing AM/PM is flagged in red on the
+ *       like the paper form. Typing a new time clears AM/PM, so you
+ *       always choose it yourself (v1.2). A missing AM/PM is flagged in red on the
  *       row, in a notice at the bottom, and blocks Make PDF.
  *       Times snap to 15-minute steps.
  *     • TOTALS card: hours per service code per week, lines used of 32,
@@ -73,7 +74,8 @@ function codeSelect(value, onChange) {
    (phase "typing" while typing, "commit" when the box is left or AM/PM tapped). */
 function timeControl(obj, k, onDone, label) {
   const wrap = el("div", "tc");
-  const txt = input("text", obj[k + "In"], v => { obj[k + "In"] = v; onDone("typing"); },
+  // a new time needs a new AM/PM choice: typing clears the old one
+  const txt = input("text", obj[k + "In"], v => { obj[k + "In"] = v; obj[k + "Ap"] = ""; onDone("typing"); },
     { inputMode: "numeric", placeholder: "8:30", autocomplete: "off", maxLength: 8 });
   txt.setAttribute("aria-label", label + " time");
   txt.addEventListener("change", () => onDone("commit"));
