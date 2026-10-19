@@ -1,0 +1,142 @@
+/* =====================================================================
+ * styles.css — look of the IRIS Timesheet app (screen only; the PDF is
+ * the official iLIFE form filled by js/pdffill.js)
+ * Generated with: Claude Opus 5.5 (claude-opus-5-5)
+ * Matches the Report Builder app: warm paper, serif type, dark bottom bar.
+ * ---------------------------------------------------------------------
+ * SECTIONS IN THIS FILE
+ *   1. Colours (edit the :root variables to re-theme)
+ *   2. Page shell: top bar, status line, bottom bar
+ *   3. Cards, jump bar, inputs (16px min — stops iPhone zoom-on-tap)
+ *   4. Day cards + shifts
+ *   5. Totals table, problems list
+ *   6. Signatures + signature pop-up
+ * DEPENDENCIES   none. Loaded by index.html.
+ * ===================================================================== */
+
+/* 1. Colours ---------------------------------------------------------- */
+:root {
+  --ink: #1c2430;
+  --muted: #5e6672;
+  --line: #c9c2b4;
+  --paper: #f3eee6;
+  --card: #fffcf8;
+  --accent: #6b4330;
+  --accent-soft: #efe3d6;
+  --ok: #2f4a3c;
+  --warn: #8a3b12;
+  --err: #a11d1d;
+  --bar: #2a241e;
+}
+
+/* 2. Page shell ------------------------------------------------------- */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Palatino, "Palatino Linotype", Georgia, serif;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 12px 12px 92px;
+}
+button { font-family: inherit; cursor: pointer; color: inherit; }
+button:disabled { opacity: 0.4; cursor: default; }
+svg { width: 1.05em; height: 1.05em; vertical-align: -0.15em; margin-right: 6px; }
+.hidden { display: none !important; }
+.topbar {
+  position: sticky; top: 0; z-index: 8; display: flex; align-items: baseline; gap: 10px;
+  margin: -12px -12px 10px; padding: 12px; background: var(--bar); color: #f4efe6;
+}
+.top-title { font-weight: 700; letter-spacing: 0.02em; }
+.top-sub { font-size: 0.8rem; color: #d7c4a8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sync { font-size: 0.85rem; color: var(--ok); min-height: 1em; margin: 0 0 8px; }
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px;
+  padding: 10px; background: var(--bar); z-index: 10;
+}
+.bar button { flex: 1; border: 1px solid #d7c4a8; background: transparent; color: #f4efe6; padding: 12px 8px; min-height: 44px; }
+.bar button.primary { background: #f4efe6; color: var(--bar); font-weight: 700; }
+
+/* 3. Cards, jump bar, inputs ----------------------------------------- */
+#fillView { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
+.jump {
+  position: sticky; top: 44px; z-index: 5; display: flex; gap: 6px; overflow-x: auto;
+  padding: 8px 0; background: var(--paper); scrollbar-width: none;
+}
+.jump button { flex: none; border: 1px solid var(--line); background: var(--card); padding: 6px 12px; font-size: 0.9rem; border-radius: 16px; min-height: 36px; }
+section.card { background: var(--card); border: 1px solid var(--line); padding: 4px 14px 14px; scroll-margin-top: 100px; }
+section.card > h2 {
+  display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+  font-size: 0.8rem; letter-spacing: 0.12em; margin: 10px 0 10px;
+  border-bottom: 1px solid var(--ink); padding-bottom: 4px; user-select: none;
+}
+section.card > h2::after { content: "▾"; font-size: 0.9rem; transition: transform 0.15s; }
+section.card.collapsed > h2::after { transform: rotate(-90deg); }
+section.card.collapsed > .flow { display: none; }
+.flow { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: flex-start; }
+input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+  font-family: inherit; font-size: 16px; color: var(--ink); background: transparent;
+  border: none; border-bottom: 1px solid var(--line); padding: 6px 2px; width: 100%; min-height: 40px;
+  border-radius: 0;
+}
+select { background: #fff; border: 1px solid var(--line); padding: 6px; }
+input:focus, select:focus { outline: 2px solid #d7c4a8; }
+input.snapped { background: var(--accent-soft); transition: background 0.3s; }
+label.line { display: flex; flex-direction: column; gap: 2px; min-width: 6.5rem; flex: 1 1 8rem; }
+.flow > label.line, .sigrow > label.line { flex: none; }
+.cap { font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.cap.b { font-weight: 700; color: var(--ink); }
+.subhead { width: 100%; font-size: 1rem; }
+.subhead.b { font-weight: 700; }
+.with-act { display: flex; gap: 6px; align-items: flex-end; }
+.with-act > input, .with-act > select { flex: 1; min-width: 0; }
+.act {
+  flex: none; font-size: 0.85rem; border: 1px solid var(--line); background: #fff; padding: 6px 10px;
+  min-height: 40px; color: var(--ink); display: inline-flex; align-items: center; justify-content: center;
+}
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.fact { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px dashed var(--line); }
+.note { margin: 0; font-size: 0.9rem; color: var(--muted); }
+.note.warn { color: var(--warn); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips:empty { display: none; }
+.chips button { border: 1px solid var(--line); background: #fff; padding: 6px 10px; border-radius: 16px; font-size: 0.85rem; min-height: 34px; }
+
+/* 4. Day cards + shifts ---------------------------------------------- */
+.weekhead {
+  display: flex; justify-content: space-between; margin: 8px 0 0; padding: 6px 2px;
+  font-size: 0.85rem; letter-spacing: 0.14em; border-bottom: 1.5px solid var(--ink); scroll-margin-top: 100px;
+}
+section.card.day { padding: 8px 14px 10px; }
+section.card.day.today { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.dayhead { display: flex; justify-content: space-between; align-items: baseline; }
+.daytot { font-weight: 700; color: var(--accent); }
+.shift { position: relative; padding: 8px 34px 8px 0; border-bottom: 1px dashed var(--line); display: grid; gap: 6px; }
+.shift .row label.line { flex: 1 1 7rem; }
+.hrs { font-size: 0.92rem; color: var(--ok); }
+.hrs.muted { color: var(--muted); font-style: italic; }
+.del { position: absolute; top: 8px; right: 0; width: 30px; height: 30px; border: 1px solid var(--line); background: #fff; color: var(--err); }
+.addshift { margin-top: 8px; border: 1px dashed var(--accent); background: transparent; color: var(--accent); padding: 8px 14px; min-height: 40px; }
+
+/* 5. Totals + problems ----------------------------------------------- */
+.sumtable table { width: 100%; border-collapse: collapse; }
+.sumtable th { background: var(--bar); color: #f4efe6; font-size: 0.78rem; letter-spacing: 0.05em; padding: 6px; text-align: right; }
+.sumtable th:first-child, .sumtable td:first-child { text-align: left; }
+.sumtable td { border-bottom: 1px solid var(--line); padding: 6px; text-align: right; font-variant-numeric: tabular-nums; }
+.sumtable tr.tot td { font-weight: 700; border-top: 1.5px solid var(--ink); }
+.sumtable tr.over td { color: var(--muted); text-decoration: line-through; }
+.problems { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.problems li.error { color: var(--err); font-weight: 700; }
+.problems li.warn { color: var(--warn); }
+.problems li.ok { color: var(--ok); }
+
+/* 6. Signatures ------------------------------------------------------- */
+.sigrow { display: grid; gap: 8px; padding-bottom: 12px; border-bottom: 1px dashed var(--line); }
+.sigpic { min-height: 54px; border-bottom: 1.5px solid var(--ink); display: flex; align-items: flex-end; padding: 4px; }
+.sigpic img { max-height: 48px; max-width: 100%; }
+.sigpop { position: fixed; inset: 0; z-index: 50; background: rgba(28, 36, 48, 0.55); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.sigbox { background: var(--card); width: 100%; max-width: 640px; padding: 12px; display: grid; gap: 10px; }
+.sigpad { width: 100%; height: 200px; background: #fff; border: 1px solid var(--line); touch-action: none; }
+.sigact { display: flex; gap: 8px; }
+.sigact button { flex: 1; min-height: 44px; border: 1px solid var(--ink); background: transparent; }
+.sigact button.primary { background: var(--ink); color: var(--paper); font-weight: 700; }

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- =====================================================================
+  index.html — IRIS Timesheet (webxdc app for Delta Chat)  v1.0
+  Generated with: Claude Opus 5.5 (claude-opus-5-5)
+  ---------------------------------------------------------------------
+  WHAT IT DOES
+    Fills out the iLIFE "IRIS Participant-Hired Worker Timesheet" (10/2025)
+    with the math done for you: pay period dates from the 2026 schedule,
+    hours from start/end times, AM/PM, 15-minute steps, overnight shifts
+    split at midnight, weekly totals per service code. "Make PDF" fills
+    the real fillable form (form/iris-timesheet.pdf) and puts it in a chat.
+
+    Page shell only:
+      top bar        app title
+      #sync          one-line status messages
+      #fillView      the form (built by js/fill.js)
+      .bar           bottom buttons
+
+  SCRIPT LOAD ORDER (order matters — each file uses the ones above it)
+    webxdc.js             provided by Delta Chat at runtime
+    vendor/pdf-lib.min.js PDF form filling (MIT licence, see vendor/)
+    js/schedule.js        2026 pay periods + date helpers
+    js/model.js           data, time math, form lines, totals, checks
+    js/store.js           on-device save + chat sync
+    js/pdffill.js         fills the official PDF
+    js/signature.js       signature pad pop-up
+    js/fill.js            the screen
+    js/app.js             start-up, bottom bar, Make PDF — runs last
+
+  STYLES            styles.css (same look as Report Builder)
+  PACKAGING         manifest.toml (name), icon.png (icon), build.sh
+====================================================================== -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IRIS Timesheet</title>
+<link rel="stylesheet" href="styles.css" />
+<script src="webxdc.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/model.js"></script>
+<script src="js/store.js"></script>
+<script src="js/pdffill.js"></script>
+<script src="js/signature.js"></script>
+<script src="js/fill.js"></script>
+</head>
+<body>
+<div class="topbar">
+  <span class="top-title">IRIS Timesheet</span>
+  <span class="top-sub">iLIFE · Participant-Hired Worker</span>
+</div>
+<p class="sync" id="sync"></p>
+
+<div id="fillView"></div>
+
+<div class="bar">
+  <button type="button" id="clear">Clear period</button>
+  <button type="button" id="syncBtn" class="hidden">Sync: on</button>
+  <button type="button" class="primary" id="pdf">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 14h6M9 18h6"/></svg>Make PDF
+  </button>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

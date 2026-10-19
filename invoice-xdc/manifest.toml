@@ -1,4 +1,0 @@
-# manifest.toml — webxdc app metadata (read by Delta Chat / other webxdc hosts)
-# Generated with Claude Opus 5.5 (Claude Code)
-name = "Auto Repair Invoice"
-source_code_url = "https://github.com/shonoflight/-plm-portable-laugage-model"
