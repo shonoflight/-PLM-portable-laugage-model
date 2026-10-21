@@ -19,12 +19,15 @@
  *       and every problem found (js/model.js problems()).
  *     • SIGN card: draw signatures; date fills in as today (optional).
  *     • DEFAULTS card: worker number, names, usual service code, how new
- *       shifts are suggested, default shift times, quick-pick times,
- *       auto signature date, service code list, save/load defaults file.
+ *       shifts are suggested, default shift times, auto signature date,
+ *       service code list, save/load defaults file.
+ *     v1.3 compact shift row:  [4:30][AM|PM] – [6:00][AM|PM] [SHC▾]
+ *                              2.00 h  ⚠ messages               ✕
+ *       The code is a small chip; tapping it opens the full list.
  *   refreshCalc()  updates only numbers and warnings (keeps the keyboard).
  *
  * TO CHANGE: card order = the order in renderFill(); time control look =
- *   timeControl(); suggestion rules = suggestShift().
+ *   timeControl(); code chip = codeChip(); suggestion rules = suggestShift().
  *
  * DEPENDENCIES   js/ui.js, js/schedule.js, js/model.js, js/store.js,
  *                js/signature.js
@@ -67,6 +70,17 @@ function codeSelect(value, onChange) {
   s.value = value;
   s.onchange = () => onChange(s.value);
   return s;
+}
+
+/* Small code chip "PC ▾": shows only the code; an invisible <select> on
+   top opens the phone's own list with full names when tapped. */
+function codeChip(value, onChange) {
+  const chip = el("label", "codechip");
+  const face = el("span", "", value);
+  const sel = codeSelect(value, v => { face.textContent = v; onChange(v); });
+  sel.setAttribute("aria-label", "Service code");
+  chip.append(face, el("span", "caret", "▾"), sel);
+  return chip;
 }
 
 /* Time control: [ 8:30 ] [AM] [PM].  obj[k+"In"] / obj[k+"Ap"] hold the
@@ -237,12 +251,7 @@ function shiftRow(iso, sh, n) {
   st = timeControl(sh, "s", ph => changed("s", ph), "Start");
   en = timeControl(sh, "e", ph => changed("e", ph), "End");
 
-  const chips = el("div", "chips");
-  if (!sh.sIn) (state.profile.quick || []).forEach(q => chips.appendChild(button(label12(q), "", () => {
-    Object.assign(sh, { sIn: to12(q).t.replace(/^0/, ""), sAp: to12(q).ap, s: q });
-    save(state.cur); renderFill();
-  })));
-  const code = codeSelect(sh.c || state.profile.defCode, v => { sh.c = v; save(state.cur); refreshCalc(); });
+  const code = codeChip(sh.c || state.profile.defCode, v => { sh.c = v; save(state.cur); refreshCalc(); });
   const del = button("✕", "del", async () => {
     if ((sh.sIn || sh.eIn) && !(await askConfirm("Remove this shift?", "Remove", "Keep"))) return;
     data.days[iso].splice(n, 1);
@@ -250,10 +259,11 @@ function shiftRow(iso, sh, n) {
     save(state.cur); renderFill();
   });
   del.title = "Remove this shift"; del.setAttribute("aria-label", "Remove this shift");
-  const hrs = el("div", "hrs"), msgs = el("ul", "msgs");
-  const times = el("div", "row");
-  times.append(field("Start", st), field("End", en), field("Code", code));
-  row.append(times, chips, hrs, msgs, del);
+  const hrs = el("span", "hrs"), msgs = el("ul", "msgs");
+  const line1 = el("div", "sline"), line2 = el("div", "sline2");
+  line1.append(st, el("span", "dash", "–"), en, code);
+  line2.append(hrs, msgs, del);
+  row.append(line1, line2);
 
   _shiftRefreshers.push(() => {
     st.sync(); en.sync();
@@ -261,8 +271,7 @@ function shiftRow(iso, sh, n) {
     msgs.replaceChildren(...ps.map(x => el("li", x.level, "⚠ " + x.text)));
     if (sh.s && sh.e && sh.s !== sh.e) {
       hrs.className = "hrs";
-      hrs.textContent = label12(sh.s) + " – " + label12(sh.e) + " = " + fmtHours(shiftHours(sh)) + " h" +
-        (crossesMidnight(sh) ? "  (past midnight: split into 2 lines on the form)" : "");
+      hrs.textContent = fmtHours(shiftHours(sh)) + " h" + (crossesMidnight(sh) ? " · past midnight (2 lines on form)" : "");
     } else { hrs.className = "hrs muted"; hrs.textContent = ps.length ? "" : "Enter start and end"; }
   });
   return row;
@@ -335,19 +344,6 @@ function defaultsCard(pr) {
   dRow.append(field("Default start", ds), field("Default end", de));
   wf.append(dRow, dHrs); showD();
 
-  const quick = input("text", (pr.quick || []).map(label12).join(", "), () => {}, { placeholder: "7 AM, 8:30 AM, 4 PM" });
-  const qNote = el("p", "cap");
-  quick.addEventListener("change", () => {
-    const ok = [], badOnes = [];
-    quick.value.split(",").map(x => x.trim()).filter(Boolean).forEach(tok => {
-      const r = parseTime(tok, "");
-      if (r.hhmm) ok.push(snap15(r.hhmm)); else badOnes.push(tok);
-    });
-    pr.quick = Array.from(new Set(ok)).sort(); save("profile");
-    renderFill();
-    if (badOnes.length) showToast("Skipped " + badOnes.join(", ") + ": quick-pick times need AM or PM, e.g. 7 AM.", "warn", 6000);
-  });
-  wf.appendChild(field("Quick-pick start times (comma separated)", quick));
 
   const auto = el("label", "pill");
   const cb = el("input"); cb.type = "checkbox"; cb.checked = !!pr.autoSigDate;

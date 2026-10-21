@@ -35,7 +35,7 @@ let _dirty = { profile: false, periods: new Set() }, _timer = null;
 function upgrade(s) {
   const b = blankState();
   s.profile = Object.assign({}, b.profile, s.profile || {});
-  if (!Array.isArray(s.profile.quick)) s.profile.quick = b.profile.quick;
+  delete s.profile.quick;   // v1.3: quick-pick times removed
   if (!Array.isArray(s.codes) || !s.codes.length) s.codes = b.codes;
   s.periods = s.periods || {};
   Object.values(s.periods).forEach(pd => Object.values(pd.days || {}).forEach(list => list.forEach(migrateShift)));

@@ -6,7 +6,7 @@
  *   1. The data shape (one global `state`, saved by js/store.js):
  *        state.profile  defaults (see DEFAULT_PROFILE): worker number,
  *                       names, usual service code, how new shifts are
- *                       suggested, default shift times, quick-pick times,
+ *                       suggested, default shift times,
  *                       auto signature date
  *        state.codes    service code list [{code, name}]
  *        state.cur      id of the pay period on screen
@@ -54,13 +54,12 @@ const DEFAULT_PROFILE = {
   defCode: "SHC",
   suggest: "last",            // new shift: "last" = copy last shift, "default" = default times, "blank"
   defStart: "", defEnd: "",   // default shift times, 24-hour "HH:MM" ("" = none)
-  quick: ["07:00", "08:00", "09:00", "12:00", "16:00", "20:00"],   // quick-pick start times
   autoSigDate: true,          // signing fills today's date
 };
 
 function blankState() {
   return {
-    profile: Object.assign({}, DEFAULT_PROFILE, { quick: DEFAULT_PROFILE.quick.slice() }),
+    profile: Object.assign({}, DEFAULT_PROFILE),
     codes: DEFAULT_CODES.map(c => Object.assign({}, c)),
     cur: defaultPeriodId(),
     periods: {},
@@ -124,7 +123,7 @@ function setShiftTime(sh, k, quiet) {
   } else sh[k] = "";
   return note;
 }
-/* Shift from 24-hour times (used for suggestions, quick picks, old data). */
+/* Shift from 24-hour times (used for suggestions and old data). */
 function makeShift(s, e, c) {
   const sh = { sIn: "", sAp: "", eIn: "", eAp: "", s: "", e: "", c: c || state.profile.defCode };
   if (s) { const x = to12(s); sh.sIn = x.t.replace(/^0/, ""); sh.sAp = x.ap; sh.s = s; }

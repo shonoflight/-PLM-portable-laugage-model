@@ -100,9 +100,6 @@ label.line { display: flex; flex-direction: column; gap: 2px; min-width: 6.5rem;
 .fact { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px dashed var(--line); }
 .note { margin: 0; font-size: 0.9rem; color: var(--muted); }
 .note.warn { color: var(--warn); }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chips:empty { display: none; }
-.chips button { border: 1px solid var(--line); background: #fff; padding: 6px 10px; border-radius: 16px; font-size: 0.85rem; min-height: 34px; }
 
 /* 4. Day cards + shifts ---------------------------------------------- */
 .weekhead {
@@ -113,11 +110,25 @@ section.card.day { padding: 8px 14px 10px; }
 section.card.day.today { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
 .dayhead { display: flex; justify-content: space-between; align-items: baseline; }
 .daytot { font-weight: 700; color: var(--accent); }
-.shift { position: relative; padding: 8px 34px 8px 0; border-bottom: 1px dashed var(--line); display: grid; gap: 6px; }
-.shift .row label.line { flex: 1 1 7rem; }
-.hrs { font-size: 0.92rem; color: var(--ok); }
+/* v1.3 compact shift: line 1 = times + code chip, line 2 = hours + ✕ */
+.shift { padding: 8px 0 6px; border-bottom: 1px dashed var(--line); display: grid; gap: 2px; }
+.sline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sline .dash { color: var(--muted); }
+.sline2 { display: flex; align-items: center; gap: 8px; min-height: 28px; }
+.sline2 .msgs { flex: 1; }
+.sline2 .del { margin-left: auto; flex: none; }
+.hrs { font-size: 0.85rem; color: var(--ok); }
 .hrs.muted { color: var(--muted); font-style: italic; }
-.del { position: absolute; top: 8px; right: 0; width: 30px; height: 30px; border: 1px solid var(--line); background: #fff; color: var(--err); }
+.del { width: 26px; height: 26px; padding: 0; border: none; background: transparent; color: var(--muted); font-size: 0.95rem; }
+.del:hover, .del:focus { color: var(--err); }
+.codechip {
+  position: relative; display: inline-flex; align-items: center; gap: 3px; margin-left: auto;
+  height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 15px;
+  background: #fff; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em;
+}
+.codechip .caret { font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+.codechip select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; min-height: 0; padding: 0; border: none; font-size: 16px; cursor: pointer; }
+.codechip:focus-within { outline: 2px solid #d7c4a8; }
 .addshift { margin-top: 8px; border: 1px dashed var(--accent); background: transparent; color: var(--accent); padding: 8px 14px; min-height: 40px; }
 
 /* 5. Totals + problems ----------------------------------------------- */
@@ -145,10 +156,12 @@ section.card.day.today { border-color: var(--accent); box-shadow: inset 4px 0 0 
 
 /* 7. v1.1 ------------------------------------------------------------- */
 /* time box + AM/PM, like the paper form; red when AM/PM is missing */
-.tc { display: flex; gap: 6px; align-items: flex-end; }
-.tc > input { flex: 1; min-width: 3.5rem; }
+.tc { display: flex; gap: 4px; align-items: center; }
+.tc > input { width: 3.4rem; flex: none; min-height: 34px; padding: 4px 2px; text-align: center; }
 .ap { display: flex; flex: none; }
-.ap button { min-width: 44px; min-height: 40px; border: 1px solid var(--line); background: #fff; font-size: 0.9rem; }
+.ap button { width: 30px; height: 26px; padding: 0; border: 1px solid var(--line); background: #fff; font-size: 0.68rem; letter-spacing: 0.02em; }
+.ap button:first-child { border-radius: 4px 0 0 4px; }
+.ap button:last-child { border-radius: 0 4px 4px 0; }
 .ap button + button { border-left: none; }
 .ap button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 700; }
 .tc.need .ap button:not(.on) { border-color: var(--err); color: var(--err); background: #fbeaea; animation: nudge 1.2s ease-in-out 2; }
